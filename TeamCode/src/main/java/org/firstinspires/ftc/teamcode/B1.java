@@ -5,24 +5,26 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 
-@TeleOp(name = "B1 (Blocks to Java)")
-public class B1 extends LinearOpMode {
+@TeleOp(name = "B2 (Blocks to Java)")
+public class B2 extends LinearOpMode {
 
-  private CRServo intake;
   private DcMotor left_front_drive;
   private DcMotor right_front_drive;
+  private CRServo intake;
+  private Servo wrist;
   private DcMotor left_arm;
 
   double ARM_COLLECT;
-  int INTAKE_OFF;
   double armPosition;
   double ARM_DOWN;
   double ARM_SCORE_SAMPLE_IN_LOW;
   double ARM_ATTACH_HANGING_HOOK;
   double ARM_WINCH_ROBOT;
   int INTAKE_COLLECT;
+  int INTAKE_OFF;
   int INTAKE_DEPOSIT;
   double FUDGE_FACTOR;
 
@@ -63,9 +65,10 @@ public class B1 extends LinearOpMode {
   public void runOpMode() {
     double armPositionFudgeFactor;
 
-    intake = hardwareMap.get(CRServo.class, "intake");
     left_front_drive = hardwareMap.get(DcMotor.class, "left_front_drive");
     right_front_drive = hardwareMap.get(DcMotor.class, "right_front_drive");
+    intake = hardwareMap.get(CRServo.class, "intake");
+    wrist = hardwareMap.get(Servo.class, "wrist");
     left_arm = hardwareMap.get(DcMotor.class, "left_arm");
 
     // A function to create and set the target positions for different scoring positions.
@@ -74,7 +77,6 @@ public class B1 extends LinearOpMode {
     SetMotorSettings();
     // Make sure that the intake is off, and the wrist is folded in.
     waitForStart();
-    intake.setPower(INTAKE_OFF);
     armPosition = ARM_DOWN;
     if (opModeIsActive()) {
       while (opModeIsActive()) {
@@ -87,11 +89,18 @@ public class B1 extends LinearOpMode {
         left_front_drive.setPower(-gamepad1.right_stick_x + gamepad1.left_stick_y);
         right_front_drive.setPower(-gamepad1.right_stick_x - gamepad1.left_stick_y);
         // Set the Intake speed based on which button on the gamepad was pressed
-        while (gamepad1.left_bumper) {
-          intake.setPower(INTAKE_COLLECT);
-        }
-        while (gamepad1.right_bumper) {
-          intake.setPower(INTAKE_DEPOSIT);
+        if (gamepad1.left_bumper) {
+          while (gamepad1.left_bumper) {
+            intake.setPower(INTAKE_COLLECT);
+          }
+        } else {
+          if (gamepad1.right_bumper) {
+            while (gamepad1.right_bumper) {
+              intake.setPower(INTAKE_DEPOSIT);
+            }
+          } else {
+            intake.setPower(INTAKE_OFF);
+          }
         }
         // Create Arm Fudge Factor, which lets us adjust the position of our deposit slightly with the triggers
         // Here we create a "fudge factor" for the arm position.
@@ -123,12 +132,17 @@ public class B1 extends LinearOpMode {
               if (gamepad1.dpad_up) {
                 // This sets the arm to vertical to hook onto the LOW RUNG for hanging
                 armPosition = ARM_ATTACH_HANGING_HOOK;
-                intake.setPower(INTAKE_OFF);
               } else {
                 if (gamepad1.dpad_down) {
-                  // this moves the arm down to lift the robot up once it has been hooked
                   armPosition = ARM_WINCH_ROBOT;
-                  intake.setPower(INTAKE_OFF);
+                } else {
+                  if (gamepad1.dpad_left) {
+                    wrist.setPosition(0.52);
+                  } else {
+                    if (gamepad1.dpad_right) {
+                      wrist.setPosition(0.85);
+                    }
+                  }
                 }
               }
             }
@@ -159,8 +173,8 @@ public class B1 extends LinearOpMode {
     int ARM_COLLAPSED_INTO_ROBOT;
     double ARM_CLEAR_BARRIER;
     double ARM_SCORE_SPECIMEN;
-    double WRIST_FOLDED_OUT;
-    double WRIST_FOLDED_IN;
+    int WRIST_FOLDED_OUT;
+    int WRIST_FOLDED_IN;
 
     // This constant is the number of encoder ticks for each degree of rotation of the arm.
     // To find this, we first need to consider the total gear reduction powering our arm.
@@ -196,8 +210,8 @@ public class B1 extends LinearOpMode {
     INTAKE_OFF = 0;
     INTAKE_DEPOSIT = 1;
     // Variables to store the positions that the wrist should be set to when folding in, or folding out.
-    WRIST_FOLDED_OUT = 0.6;
-    WRIST_FOLDED_IN = 0.5;
+    WRIST_FOLDED_OUT = 1;
+    WRIST_FOLDED_IN = -1;
     // A number in degrees that the triggers can adjust the arm position by
     FUDGE_FACTOR = 15 * ARM_TICKS_PER_DEGREE;
     // Variables that are used to set the arm to a specific position
