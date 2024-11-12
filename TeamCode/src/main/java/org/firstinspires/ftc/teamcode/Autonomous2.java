@@ -8,7 +8,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 
 @Autonomous(name = "A2 (Blocks to Java)")
-public class A2 extends LinearOpMode {
+public class Autonomous2 extends LinearOpMode {
 
   private CRServo intake;
   private DcMotor left_arm;
